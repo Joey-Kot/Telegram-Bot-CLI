@@ -1,0 +1,7 @@
+/Example/
+/target/
+/Temp-Scrape/
+.env
+.env.*
+!.env.example
+.DS_Store
