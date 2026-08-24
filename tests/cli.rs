@@ -13,6 +13,7 @@ fn root_help_lists_the_public_commands() {
         .success()
         .stdout(predicate::str::contains("forward-messages"))
         .stdout(predicate::str::contains("animation"))
+        .stdout(predicate::str::contains("--proxy <URL>"))
         .stdout(predicate::str::contains("TELEGRAM_BOT_TOKEN"))
         .stdout(predicate::str::contains("123456789:AAExampleBotToken"))
         .stdout(predicate::str::contains("send-message").not());

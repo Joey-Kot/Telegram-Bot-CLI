@@ -10,11 +10,12 @@ readme = "README.md"
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 mime_guess = "2.0"
-reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls", "stream"] }
+percent-encoding = "2.3"
+reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls", "socks", "stream"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
-tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "net", "rt-multi-thread", "time"] }
 tokio-util = { version = "0.7", features = ["io"] }
 url = "2.5"
 

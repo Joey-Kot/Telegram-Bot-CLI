@@ -21,6 +21,10 @@ pub struct Cli {
     #[allow(dead_code)]
     version: Option<bool>,
 
+    /// 代理 URL；支持 HTTP、HTTPS、SOCKS4 和 SOCKS5
+    #[arg(long, global = true, value_name = "URL")]
+    pub proxy: Option<String>,
+
     #[command(subcommand)]
     pub command: Command,
 }

@@ -15,6 +15,9 @@ pub enum AppError {
     #[error("TELEGRAM_BOT_API_BASE_URL 无效：{0}")]
     InvalidBaseUrl(String),
 
+    #[error("代理 URL 无效：{0}")]
+    InvalidProxy(String),
+
     #[error("{0}")]
     Input(String),
 
@@ -61,6 +64,7 @@ impl AppError {
             Self::MissingBotToken
             | Self::EmptyBotToken
             | Self::InvalidBaseUrl(_)
+            | Self::InvalidProxy(_)
             | Self::Input(_)
             | Self::InputRead { .. }
             | Self::InputNotUtf8 { .. }

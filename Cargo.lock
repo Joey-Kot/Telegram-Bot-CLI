@@ -1292,6 +1292,7 @@ dependencies = [
  "assert_cmd",
  "clap",
  "mime_guess",
+ "percent-encoding",
  "predicates",
  "reqwest",
  "serde",

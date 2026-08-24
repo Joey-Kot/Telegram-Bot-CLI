@@ -25,7 +25,7 @@ async fn main() -> ExitCode {
         Err(error) => return report_error(error),
     };
 
-    let client = match telegram::TelegramClient::new(config) {
+    let client = match telegram::TelegramClient::new(config, cli.proxy.as_deref()).await {
         Ok(client) => client,
         Err(error) => return report_error(error),
     };

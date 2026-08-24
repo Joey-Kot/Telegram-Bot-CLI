@@ -56,6 +56,29 @@ set "TELEGRAM_BOT_API_BASE_URL=https://api.telegram.org"
 
 If you configure a self-hosted server, use `http://` only on a controlled local network. The Telegram token appears in the Bot API request path, so never send it to an untrusted HTTP service.
 
+## Proxy
+
+Pass the global `--proxy <URL>` option before or after a subcommand to route the Bot API request through one proxy:
+
+```bash
+tgpush --proxy 'http://127.0.0.1:8080' check
+tgpush check --proxy 'socks5://proxy-user:proxy-password@127.0.0.1:1080'
+```
+
+The following URL schemes are supported:
+
+| Scheme | Notes |
+|---|---|
+| `http://` | Supports HTTP proxy Basic authentication through URL credentials. |
+| `https://` | Uses TLS when connecting to the HTTP proxy; URL credentials use Basic authentication. |
+| `socks4://` / `socks4a://` | SOCKS4 with local / proxy-side DNS resolution respectively. The URL username is sent as the SOCKS4 user ID; SOCKS4 has no password authentication. |
+| `socks5://` / `socks5h://` | SOCKS5 with local / proxy-side DNS resolution respectively; supports username/password authentication. |
+| `socks://` | Alias for `socks5://`. |
+
+Put credentials in the URL, for example `https://user:password@proxy.example:8443` or `socks5://user:password@proxy.example:1080`. Percent-encode reserved characters in usernames and passwords. SOCKS4/4a accepts only a user ID such as `socks4://user@proxy.example:1080`; a password is rejected because SOCKS4 has no password authentication. Use SOCKS5 when username/password authentication is required.
+
+The proxy URL, including any credentials, is a command-line argument and can be visible in shell history and process listings. Use an account and execution environment appropriate for that exposure.
+
 ## Quick Start
 
 First, check connectivity and validate the token:
