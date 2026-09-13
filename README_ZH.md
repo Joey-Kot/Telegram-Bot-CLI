@@ -384,6 +384,8 @@ tgpush message \
 - 未闭合的格式标记、不支持的 HTML 标签和命名实体按普通文字显示。代码内的 HTML 标签按代码文字处理。普通 Markdown 图片显示为链接；自定义表情仍使用 Telegram 的专用语法。
 - 消息正文和所有媒体标题共用此逻辑，适用于命令行参数、UTF-8 文件和标准输入。显式提供 `entities` / `caption_entities` 时不改写文本，保留实体偏移。
 
+行内代码只匹配同一行内等长的反引号，多行代码请使用围栏代码块。未配对的反引号按文字保留。HTML 链接地址中需要保留为文字的实体形式，通过对其中一个非保留字母或数字进行百分号编码，避免 Telegram 再次解码（例如 `&lt;` 转为 `&l%74;`）；URL 分隔符保持不变。
+
 这里处理的是 Telegram 格式转义，不会把字面量 `\n`、`\t` 解释成换行或制表符。已转义的格式特殊字符会保留，其他反斜杠在 MarkdownV2 中按字面量处理。shell 引号和 JSON 语法仍遵循各自规则。
 
 规则来源：[Telegram Bot API 格式说明](https://core.telegram.org/bots/api#formatting-options)、[MarkdownV2](https://core.telegram.org/bots/api#markdownv2-style)、[HTML](https://core.telegram.org/bots/api#html-style)。

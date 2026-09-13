@@ -50,10 +50,20 @@ fn escaped_with(text: &str, reserved: &str, recognized: &str) -> String {
 fn closing(text: &str, start: usize, delimiter: &str) -> Option<usize> {
     let mut at = start;
     while at < text.len() {
-        if text[at..].starts_with(delimiter) {
-            return Some(at);
-        }
         let ch = text[at..].chars().next()?;
+        // Inline code must close on the same line. An unmatched literal tick
+        // must not consume a later inline span or a fenced code block.
+        if ch == '\n' && delimiter.len() < 3 {
+            return None;
+        }
+        if ch == '`' {
+            let size = text[at..].bytes().take_while(|b| *b == b'`').count();
+            if size == delimiter.len() {
+                return Some(at);
+            }
+            at += size;
+            continue;
+        }
         at += ch.len_utf8();
         if ch == '\\' {
             at += text[at..].chars().next().map_or(0, char::len_utf8);
@@ -430,6 +440,20 @@ mod tests {
                 "repeated conversion: {input:?}"
             );
         }
+    }
+
+    #[test]
+    fn literal_ticks_do_not_consume_later_code() {
+        let input = "symbols: ` > !\n`a_b`\n```python\nprint(1)\n```";
+        let expected = "symbols: \\` \\> \\!\n`a_b`\n```python\nprint(1)\n```";
+        assert_eq!(prepare(input, false), expected);
+        assert_eq!(prepare(expected, false), expected);
+        assert_eq!(
+            prepare("`unclosed\n```rust\nx\n```", false),
+            "\\`unclosed\n```rust\nx\n```"
+        );
+        assert_eq!(prepare("``a ` b``", false), "`a \\` b`");
+        assert_eq!(prepare("`a ``` b`", false), "`a \\`\\`\\` b`");
     }
 
     #[test]

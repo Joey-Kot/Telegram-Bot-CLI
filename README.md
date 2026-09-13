@@ -384,6 +384,8 @@ tgpush message \
 - Unmatched formatting markers, unsupported HTML tags, and unsupported named entities are displayed literally. HTML tags inside code are treated as code text. Ordinary Markdown images become links; custom emoji retain Telegram's special syntax.
 - Message text and all media captions share this behavior, including inline arguments, UTF-8 files, and stdin. Explicit `entities` / `caption_entities` leave text untouched so entity offsets remain valid.
 
+Inline code closes with an equal-length backtick run on the same line; use fenced code blocks for multiline code. Unmatched backticks remain literal. In HTML link destinations, literal entity-looking text is protected from Telegram's additional decoding by percent-encoding an unreserved letter or digit (`&lt;` becomes `&l%74;`). URL separators remain unchanged.
+
 This handles Telegram formatting escapes. Literal `\n` and `\t` are not interpreted as newlines or tabs. Already escaped formatting characters are preserved; other backslashes are treated literally in MarkdownV2. Shell quoting and JSON syntax still follow their own rules.
 
 References: [Telegram Bot API formatting options](https://core.telegram.org/bots/api#formatting-options), [MarkdownV2](https://core.telegram.org/bots/api#markdownv2-style), and [HTML](https://core.telegram.org/bots/api#html-style).

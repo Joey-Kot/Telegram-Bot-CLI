@@ -122,6 +122,32 @@ fn escape_attribute(text: &str) -> String {
     out
 }
 
+// Telegram's live sendMessage path decodes entity-looking URL text once more
+// after parsing HTML. Percent-encode an unreserved character in that text to
+// prevent the extra decode. Keep URL separators (&, =, #, ;) intact; encoding
+// the ampersand itself would change query parameter boundaries. This is also
+// stable when preparing the same HTML more than once.
+fn protect_url_entities(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut at = 0;
+    while at < text.len() {
+        let rest = &text[at..];
+        if rest.starts_with('&')
+            && let Some((len, _)) = entity(rest)
+        {
+            let last = len - 2; // last ASCII letter/digit before the semicolon
+            out.push_str(&rest[..last]);
+            out.push_str(&format!("%{:02X};", rest.as_bytes()[last]));
+            at += len;
+        } else {
+            let ch = rest.chars().next().expect("nonempty suffix");
+            out.push(ch);
+            at += ch.len_utf8();
+        }
+    }
+    out
+}
+
 fn tag_end(text: &str) -> Option<usize> {
     let mut quote = None;
     for (at, ch) in text.char_indices().skip(1) {
@@ -217,7 +243,7 @@ fn opening(name: &str, rest: &str) -> Option<Tag> {
     match name {
         "a" => {
             if let Some(href) = get("href") {
-                attribute("href", href);
+                attribute("href", &protect_url_entities(href));
             }
         }
         "span" => {
@@ -412,11 +438,24 @@ mod tests {
     use super::prepare;
 
     #[test]
+    fn href_protection_preserves_url_separators_and_is_idempotent() {
+        let input =
+            "<a href='https://example.com/&amp;lt;?a=1&amp;lt;=2&amp;b=&amp;#60;#&amp;quot;'>x</a>";
+        let expected = "<a href=\"https://example.com/&amp;l%74;?a=1&amp;l%74;=2&amp;b=&amp;#6%30;#&amp;quo%74;\">x</a>";
+        assert_eq!(prepare(input), expected);
+        assert_eq!(prepare(expected), expected);
+        assert_eq!(
+            prepare("<a href='https://example.com/?a=1&b=2&x=&lt;'>x</a>"),
+            "<a href=\"https://example.com/?a=1&amp;b=2&amp;x=&lt;\">x</a>"
+        );
+    }
+
+    #[test]
     fn html_contexts_and_idempotence() {
         let cases = [
             (
                 "<a href='https://example.com/?x=&amp;lt;'>x</a>",
-                "<a href=\"https://example.com/?x=&amp;lt;\">x</a>",
+                "<a href=\"https://example.com/?x=&amp;l%74;\">x</a>",
             ),
             ("&#X41; &#00000065;", "&#65; &#65;"),
             (
