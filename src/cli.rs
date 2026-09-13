@@ -136,7 +136,7 @@ pub struct CaptionArgs {
     #[arg(long)]
     pub caption_file: Option<PathBuf>,
 
-    /// 标题解析模式，例如 MarkdownV2 或 HTML
+    /// 标题解析模式：MarkdownV2、HTML 或 Markdown；自动处理对应格式的转义
     #[arg(long)]
     pub parse_mode: Option<String>,
 
@@ -183,7 +183,7 @@ pub struct MessageArgs {
     #[arg(long)]
     pub text_file: Option<PathBuf>,
 
-    /// 文本解析模式，例如 MarkdownV2 或 HTML
+    /// 文本解析模式：MarkdownV2、HTML 或 Markdown；自动处理对应格式的转义
     #[arg(long)]
     pub parse_mode: Option<String>,
 

@@ -4,6 +4,7 @@ mod cli;
 mod commands;
 mod config;
 mod error;
+mod formatting;
 mod input;
 mod telegram;
 

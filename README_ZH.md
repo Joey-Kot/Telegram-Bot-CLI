@@ -342,7 +342,30 @@ tgpush document --chat-id '@example_channel' --document-file ./report.pdf
 
 ## 文本、JSON 和 shell 转义
 
-CLI 不解释反斜杠转义，也不自动转义 Markdown、MarkdownV2 或 HTML。
+指定 `--parse-mode` 后，CLI 自动处理对应格式的转义，保留所选的 API 模式：`MarkdownV2` 仍发送 MarkdownV2，`HTML` 仍发送 HTML，`Markdown` 使用 Telegram 的旧版 Markdown 规则。不指定模式时，文本保持原样。
+
+例如，下面两种调用都不需要手动处理 Telegram 转义：
+
+```bash
+tgpush message \
+  --chat-id '@example_channel' \
+  --parse-mode MarkdownV2 \
+  --text '*版本 v1.2!* [说明](https://example.com/a(b)?x=1&y=2)'
+
+tgpush message \
+  --chat-id '@example_channel' \
+  --parse-mode HTML \
+  --text '<b>A & B</b> <a href="https://example.com/?x=1&y=2">详情</a>'
+```
+
+- MarkdownV2：保留成对的粗体、斜体、下划线、删除线、剧透、代码、链接和行首引用标记；根据正文、代码、链接地址的不同规则补齐转义。也接受 `**粗体**` 和 `~~删除线~~`，转换成 Telegram 对应标记。`__文本__` 按 Telegram 规则表示下划线。
+- HTML：保留 Telegram 支持的成对标签，转义正文和属性值中的特殊字符；已有的 `&lt;`、`&gt;`、`&amp;`、`&quot;` 和有效数字实体不会重复转义。数字实体会按 Telegram 解析器的限制规范化；属性先解码实体再校验和转义，保留链接地址的实际含义。
+- 未闭合的格式标记、不支持的 HTML 标签和命名实体按普通文字显示。代码内的 HTML 标签按代码文字处理。普通 Markdown 图片显示为链接；自定义表情仍使用 Telegram 的专用语法。
+- 消息正文和所有媒体标题共用此逻辑，适用于命令行参数、UTF-8 文件和标准输入。显式提供 `entities` / `caption_entities` 时不改写文本，保留实体偏移。
+
+这里处理的是 Telegram 格式转义，不会把字面量 `\n`、`\t` 解释成换行或制表符。已转义的格式特殊字符会保留，其他反斜杠在 MarkdownV2 中按字面量处理。shell 引号和 JSON 语法仍遵循各自规则。
+
+规则来源：[Telegram Bot API 格式说明](https://core.telegram.org/bots/api#formatting-options)、[MarkdownV2](https://core.telegram.org/bots/api#markdownv2-style)、[HTML](https://core.telegram.org/bots/api#html-style)。
 
 以下 Bash 调用向 Telegram 发送的是字面量 `\n`，而不是换行：
 

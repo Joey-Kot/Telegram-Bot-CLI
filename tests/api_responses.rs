@@ -88,7 +88,7 @@ async fn message_uses_json_and_keeps_literal_backslash_sequences() {
         .and(path("/bottest-token/sendMessage"))
         .and(body_json(json!({
             "chat_id": "@example_channel",
-            "text": "literal \\n, emoji 😀",
+            "text": "literal \\\\n, emoji 😀",
             "parse_mode": "MarkdownV2"
         })))
         .respond_with(ResponseTemplate::new(200).set_body_raw(

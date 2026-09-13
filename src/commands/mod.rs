@@ -8,6 +8,7 @@ use crate::cli::{
     TargetArgs, VideoArgs, VoiceArgs,
 };
 use crate::error::{AppError, Result};
+use crate::formatting::prepare_text;
 use crate::input::{InputReader, JsonKind, validate_local_file};
 use crate::telegram::{ApiResponse, RequestSpec, TelegramClient};
 
@@ -44,7 +45,7 @@ async fn build_message(args: MessageArgs, input: &mut InputReader) -> Result<Req
     add_target(&mut request, &args.target);
     add_send_context(&mut request, &args.context);
     add_send_options(&mut request, &args.send_options, input).await?;
-    request.insert_string("text", text);
+    request.insert_string("text", prepare_text(&text, args.parse_mode.as_deref()));
 
     if let Some(parse_mode) = args.parse_mode {
         request.insert_string("parse_mode", parse_mode);
@@ -333,7 +334,10 @@ async fn add_caption(
     }
 
     if let Some(caption) = caption {
-        request.insert_string("caption", caption);
+        request.insert_string(
+            "caption",
+            prepare_text(&caption, args.parse_mode.as_deref()),
+        );
     }
     if let Some(parse_mode) = &args.parse_mode {
         request.insert_string("parse_mode", parse_mode.clone());

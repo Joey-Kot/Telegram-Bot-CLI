@@ -342,7 +342,30 @@ Thumbnails must be uploaded as new local files and cannot reuse a `file_id`. `--
 
 ## Text, JSON, and Shell Escaping
 
-The CLI does not interpret backslash escapes and does not automatically escape Markdown, MarkdownV2, or HTML.
+When `--parse-mode` is supplied, the CLI automatically escapes that format while retaining the selected API mode: `MarkdownV2` stays MarkdownV2, `HTML` stays HTML, and `Markdown` uses Telegram's legacy Markdown rules. Without a parse mode, text is unchanged.
+
+Neither example below requires manual Telegram escaping:
+
+```bash
+tgpush message \
+  --chat-id '@example_channel' \
+  --parse-mode MarkdownV2 \
+  --text '*Version v1.2!* [Details](https://example.com/a(b)?x=1&y=2)'
+
+tgpush message \
+  --chat-id '@example_channel' \
+  --parse-mode HTML \
+  --text '<b>A & B</b> <a href="https://example.com/?x=1&y=2">Details</a>'
+```
+
+- MarkdownV2 preserves paired bold, italic, underline, strikethrough, spoiler, code, link, and line-start quotation syntax. Text, code, and link destinations use separate escaping rules. The common `**bold**` and `~~strikethrough~~` forms are also converted to Telegram's corresponding markers. `__text__` means underline, following Telegram's syntax.
+- HTML preserves paired tags supported by Telegram and escapes special characters in text and attribute values. Existing `&lt;`, `&gt;`, `&amp;`, `&quot;`, and valid numeric entities are not escaped again. Numeric references are normalized to Telegram's parser limits. Attribute entities are decoded before validation and escaping, preserving the actual link destination.
+- Unmatched formatting markers, unsupported HTML tags, and unsupported named entities are displayed literally. HTML tags inside code are treated as code text. Ordinary Markdown images become links; custom emoji retain Telegram's special syntax.
+- Message text and all media captions share this behavior, including inline arguments, UTF-8 files, and stdin. Explicit `entities` / `caption_entities` leave text untouched so entity offsets remain valid.
+
+This handles Telegram formatting escapes. Literal `\n` and `\t` are not interpreted as newlines or tabs. Already escaped formatting characters are preserved; other backslashes are treated literally in MarkdownV2. Shell quoting and JSON syntax still follow their own rules.
+
+References: [Telegram Bot API formatting options](https://core.telegram.org/bots/api#formatting-options), [MarkdownV2](https://core.telegram.org/bots/api#markdownv2-style), and [HTML](https://core.telegram.org/bots/api#html-style).
 
 The following Bash command sends the literal characters `\n` to Telegram instead of a newline:
 
