@@ -8,6 +8,7 @@
 
 - `getMe` 连通性和 Token 检查
 - `sendMessage`
+- `deleteMessage`
 - `forwardMessage`、`forwardMessages`
 - `sendPhoto`、`sendAudio`、`sendDocument`、`sendVideo`、`sendAnimation`、`sendVoice`
 - Telegram `file_id`、HTTP URL 和本地 multipart 文件上传
@@ -121,6 +122,7 @@ tgpush forward-messages \
 |---|---|
 | `check` | `getMe` |
 | `message` | `sendMessage` |
+| `delete` | `deleteMessage` |
 | `forward-message` | `forwardMessage` |
 | `forward-messages` | `forwardMessages` |
 | `photo` | `sendPhoto` |
@@ -199,6 +201,25 @@ tgpush message \
   --text '这是 *MarkdownV2* 文本' \
   --parse-mode MarkdownV2
 ```
+
+## `delete`
+
+删除指定聊天中的单条消息：
+
+```bash
+tgpush delete \
+  --chat-id '-1001234567890' \
+  --message-id 123
+```
+
+| 参数 | 必填 | API 字段 |
+|---|---:|---|
+| `--chat-id <ID>` | 是 | `chat_id`，支持聊天数字 ID 或 `@username` |
+| `--message-id <ID>` | 是 | `message_id`，必须为正整数 |
+
+成功时原样输出 Telegram 的 `{"ok":true,"result":true}` 响应，退出码为 0；API 返回删除失败时，原样输出错误 JSON，退出码为 1。全局 `--proxy` 参数同样适用。
+
+消息删除受 Telegram 的时间和权限限制（通常要求消息发送不满 48 小时）；最终结果由 Telegram 判断。详细规则见 [deleteMessage 官方文档](https://core.telegram.org/bots/api#deletemessage)。
 
 ## `forward-message`
 

@@ -8,6 +8,7 @@ Supported features:
 
 - `getMe` connectivity and token checks
 - `sendMessage`
+- `deleteMessage`
 - `forwardMessage` and `forwardMessages`
 - `sendPhoto`, `sendAudio`, `sendDocument`, `sendVideo`, `sendAnimation`, and `sendVoice`
 - Telegram `file_id` values, HTTP URLs, and local multipart file uploads
@@ -121,6 +122,7 @@ tgpush forward-messages \
 |---|---|
 | `check` | `getMe` |
 | `message` | `sendMessage` |
+| `delete` | `deleteMessage` |
 | `forward-message` | `forwardMessage` |
 | `forward-messages` | `forwardMessages` |
 | `photo` | `sendPhoto` |
@@ -199,6 +201,25 @@ tgpush message \
   --text 'This is *MarkdownV2* text' \
   --parse-mode MarkdownV2
 ```
+
+## `delete`
+
+Delete a single message from the specified chat:
+
+```bash
+tgpush delete \
+  --chat-id '-1001234567890' \
+  --message-id 123
+```
+
+| Argument | Required | API field |
+|---|---:|---|
+| `--chat-id <ID>` | Yes | `chat_id`, a numeric chat ID or `@username` |
+| `--message-id <ID>` | Yes | `message_id`, a positive integer |
+
+On success, the CLI outputs Telegram's `{"ok":true,"result":true}` response unchanged and exits with code 0. An API deletion failure is returned as the original error JSON with exit code 1. The global `--proxy` option also applies.
+
+Deletion is subject to Telegram's time and permission restrictions, generally requiring messages to be less than 48 hours old. Telegram determines the final result. See the [official deleteMessage documentation](https://core.telegram.org/bots/api#deletemessage) for the full rules.
 
 ## `forward-message`
 

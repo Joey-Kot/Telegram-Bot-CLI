@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use serde_json::Value;
 
 use crate::cli::{
-    AnimationArgs, AudioArgs, CaptionArgs, Command, DocumentArgs, ForwardMessageArgs,
+    AnimationArgs, AudioArgs, CaptionArgs, Command, DeleteArgs, DocumentArgs, ForwardMessageArgs,
     ForwardMessagesArgs, MediaBaseArgs, MessageArgs, PhotoArgs, SendContextArgs, SendOptionsArgs,
     TargetArgs, VideoArgs, VoiceArgs,
 };
@@ -17,6 +17,7 @@ pub async fn execute(client: &TelegramClient, command: Command) -> Result<ApiRes
     let request = match command {
         Command::Check => RequestSpec::new("getMe"),
         Command::Message(args) => build_message(args, &mut input).await?,
+        Command::Delete(args) => build_delete(args),
         Command::ForwardMessage(args) => build_forward_message(args, &mut input).await?,
         Command::ForwardMessages(args) => build_forward_messages(args)?,
         Command::Photo(args) => build_photo(args, &mut input).await?,
@@ -28,6 +29,13 @@ pub async fn execute(client: &TelegramClient, command: Command) -> Result<ApiRes
     };
 
     client.execute(request).await
+}
+
+fn build_delete(args: DeleteArgs) -> RequestSpec {
+    let mut request = RequestSpec::new("deleteMessage");
+    request.insert_string("chat_id", args.chat_id);
+    request.insert_i64("message_id", args.message_id);
+    request
 }
 
 async fn build_message(args: MessageArgs, input: &mut InputReader) -> Result<RequestSpec> {

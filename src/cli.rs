@@ -35,6 +35,8 @@ pub enum Command {
     Check,
     /// 发送文本消息
     Message(MessageArgs),
+    /// 删除指定聊天中的单条消息
+    Delete(DeleteArgs),
     /// 转发单条消息
     ForwardMessage(ForwardMessageArgs),
     /// 转发多条消息
@@ -51,6 +53,17 @@ pub enum Command {
     Animation(AnimationArgs),
     /// 发送语音消息
     Voice(VoiceArgs),
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct DeleteArgs {
+    /// 消息所在聊天 ID 或 @username
+    #[arg(long, allow_negative_numbers = true)]
+    pub chat_id: String,
+
+    /// 要删除的消息 ID，必须为正整数
+    #[arg(long, value_parser = clap::value_parser!(i64).range(1..))]
+    pub message_id: i64,
 }
 
 #[derive(Debug, Clone, Args)]

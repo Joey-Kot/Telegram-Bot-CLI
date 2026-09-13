@@ -12,11 +12,48 @@ fn root_help_lists_the_public_commands() {
         .assert()
         .success()
         .stdout(predicate::str::contains("forward-messages"))
+        .stdout(predicate::str::contains("delete"))
         .stdout(predicate::str::contains("animation"))
         .stdout(predicate::str::contains("--proxy <URL>"))
         .stdout(predicate::str::contains("TELEGRAM_BOT_TOKEN"))
         .stdout(predicate::str::contains("123456789:AAExampleBotToken"))
         .stdout(predicate::str::contains("send-message").not());
+}
+
+#[test]
+fn delete_requires_a_chat_and_one_positive_message_id() {
+    for args in [
+        vec!["delete", "--chat-id", "@target"],
+        vec!["delete", "--message-id", "1"],
+        vec!["delete", "--chat-id", "@target", "--message-id", "0"],
+        vec!["delete", "--chat-id", "@target", "--message-id=-1"],
+        vec!["delete", "--chat-id", "@target", "--message-id", "abc"],
+        vec![
+            "delete",
+            "--chat-id",
+            "@target",
+            "--message-id",
+            "1",
+            "--message-id",
+            "2",
+        ],
+        vec![
+            "delete",
+            "--chat-id",
+            "@target",
+            "--message-id",
+            "1",
+            "--message-thread-id",
+            "2",
+        ],
+    ] {
+        tgpush()
+            .args(args)
+            .env("TELEGRAM_BOT_TOKEN", "test-token")
+            .assert()
+            .code(2)
+            .stdout(predicate::str::is_empty());
+    }
 }
 
 #[test]

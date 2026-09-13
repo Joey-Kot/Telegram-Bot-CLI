@@ -16,6 +16,39 @@ fn success_response() -> ResponseTemplate {
 }
 
 #[tokio::test]
+async fn delete_serializes_only_its_fields_and_preserves_api_responses() {
+    let server = MockServer::start().await;
+    for (chat_id, status, body, exit_code) in [
+        (
+            "-1001234567890",
+            200,
+            "{ \"ok\": true, \"result\": true }\n",
+            0,
+        ),
+        (
+            "@target",
+            400,
+            "{\"ok\":false,\"error_code\":400,\"description\":\"Bad Request: message can't be deleted\"}",
+            1,
+        ),
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/bottest-token/deleteMessage"))
+            .and(body_json(json!({"chat_id": chat_id, "message_id": 123})))
+            .respond_with(ResponseTemplate::new(status).set_body_raw(body, "application/json"))
+            .expect(1)
+            .mount(&server)
+            .await;
+        tgpush(&server)
+            .args(["delete", "--chat-id", chat_id, "--message-id", "123"])
+            .assert()
+            .code(exit_code)
+            .stdout(body)
+            .stderr("");
+    }
+}
+
+#[tokio::test]
 async fn forward_message_serializes_its_documented_fields() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
