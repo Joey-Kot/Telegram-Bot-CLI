@@ -47,7 +47,7 @@ async fn http_proxy_uses_url_credentials() {
 }
 
 #[test]
-fn socks4_proxy_uses_url_user_id() {
+fn socks4_proxy_tunnels_requests() {
     let (port, result) = start_proxy(|stream| {
         let mut request = [0; 8];
         stream
@@ -57,11 +57,11 @@ fn socks4_proxy_uses_url_user_id() {
             return Err(format!("unexpected SOCKS4 request: {request:?}"));
         }
 
-        let mut user_id = [0; 11];
+        let mut user_id = [0; 1];
         stream
             .read_exact(&mut user_id)
             .map_err(|error| error.to_string())?;
-        if user_id != *b"proxy-user\0" {
+        if user_id != [0] {
             return Err(format!("unexpected SOCKS4 user ID: {user_id:?}"));
         }
 
@@ -72,10 +72,56 @@ fn socks4_proxy_uses_url_user_id() {
         write_success_response(stream)
     });
 
-    let proxy_url = format!("socks4://proxy-user@127.0.0.1:{port}");
+    let proxy_url = format!("socks4://127.0.0.1:{port}");
     let output = tgpush()
         .args(["--proxy", &proxy_url, "check"])
         .env("TELEGRAM_BOT_API_BASE_URL", "http://127.0.0.1:12345")
+        .output()
+        .expect("run tgpush");
+
+    assert_proxy_completed(result);
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(output.stdout, b"{\"ok\":true,\"result\":{}}");
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn socks4a_proxy_resolves_destination_remotely() {
+    let (port, result) = start_proxy(|stream| {
+        let mut request = [0; 8];
+        stream
+            .read_exact(&mut request)
+            .map_err(|error| error.to_string())?;
+        if request != [4, 1, 0x30, 0x39, 0, 0, 0, 0xff] {
+            return Err(format!("unexpected SOCKS4a request: {request:?}"));
+        }
+
+        let user_id = read_c_string(stream)?;
+        if !user_id.is_empty() {
+            return Err(format!("unexpected SOCKS4a user ID: {user_id:?}"));
+        }
+        let destination =
+            String::from_utf8(read_c_string(stream)?).map_err(|error| error.to_string())?;
+        if destination != "telegram.example" {
+            return Err(format!("unexpected SOCKS4a destination: {destination:?}"));
+        }
+
+        stream
+            .write_all(&[0, 90, 0x30, 0x39, 0, 0, 0, 1])
+            .map_err(|error| error.to_string())?;
+        assert_get_me_request(stream)?;
+        write_success_response(stream)
+    });
+
+    let proxy_url = format!("socks4a://127.0.0.1:{port}");
+    let output = tgpush()
+        .args(["--proxy", &proxy_url, "check"])
+        .env("TELEGRAM_BOT_API_BASE_URL", "http://telegram.example:12345")
         .output()
         .expect("run tgpush");
 
@@ -177,6 +223,40 @@ fn socks5_proxy_uses_url_credentials() {
 }
 
 #[test]
+fn socks5h_proxy_resolves_destination_remotely() {
+    let (port, result) = start_proxy(|stream| {
+        read_socks5_without_authentication(stream)?;
+        let destination = read_socks5_destination(stream)?;
+        if destination != ("telegram.example".to_owned(), 12345) {
+            return Err(format!("unexpected SOCKS5h destination: {destination:?}"));
+        }
+
+        stream
+            .write_all(&[5, 0, 0, 1, 0, 0, 0, 0, 0, 0])
+            .map_err(|error| error.to_string())?;
+        assert_get_me_request(stream)?;
+        write_success_response(stream)
+    });
+
+    let proxy_url = format!("socks5h://127.0.0.1:{port}");
+    let output = tgpush()
+        .args(["check", "--proxy", &proxy_url])
+        .env("TELEGRAM_BOT_API_BASE_URL", "http://telegram.example:12345")
+        .output()
+        .expect("run tgpush");
+
+    assert_proxy_completed(result);
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(output.stdout, b"{\"ok\":true,\"result\":{}}");
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
 fn invalid_proxy_values_are_rejected_without_exposing_credentials() {
     tgpush()
         .args(["check", "--proxy", "ftp://proxy-user:secret@127.0.0.1:21"])
@@ -195,7 +275,9 @@ fn invalid_proxy_values_are_rejected_without_exposing_credentials() {
         .assert()
         .code(2)
         .stdout(predicate::str::is_empty())
-        .stderr(predicate::str::contains("SOCKS4 不支持密码认证"))
+        .stderr(predicate::str::contains(
+            "SOCKS4 和 SOCKS4a 不支持 URL 认证",
+        ))
         .stderr(predicate::str::contains("secret").not());
 }
 
@@ -269,6 +351,17 @@ fn read_socks5_credentials(stream: &mut TcpStream) -> ProxyResultWith<(String, S
     ))
 }
 
+fn read_socks5_without_authentication(stream: &mut TcpStream) -> ProxyResult {
+    let mut greeting = [0; 3];
+    stream
+        .read_exact(&mut greeting)
+        .map_err(|error| error.to_string())?;
+    if greeting != [5, 1, 0] {
+        return Err(format!("unexpected SOCKS5 greeting: {greeting:?}"));
+    }
+    stream.write_all(&[5, 0]).map_err(|error| error.to_string())
+}
+
 fn read_socks5_destination(stream: &mut TcpStream) -> ProxyResultWith<(String, u16)> {
     let mut request = [0; 4];
     stream
@@ -309,6 +402,23 @@ fn read_socks5_destination(stream: &mut TcpStream) -> ProxyResultWith<(String, u
         .map_err(|error| error.to_string())?;
 
     Ok((host, u16::from_be_bytes(port)))
+}
+
+fn read_c_string(stream: &mut TcpStream) -> ProxyResultWith<Vec<u8>> {
+    let mut value = Vec::new();
+    loop {
+        let mut byte = [0; 1];
+        stream
+            .read_exact(&mut byte)
+            .map_err(|error| error.to_string())?;
+        if byte[0] == 0 {
+            return Ok(value);
+        }
+        value.push(byte[0]);
+        if value.len() > 255 {
+            return Err("SOCKS4 string is unexpectedly long".to_owned());
+        }
+    }
 }
 
 fn assert_get_me_request(stream: &mut TcpStream) -> ProxyResult {

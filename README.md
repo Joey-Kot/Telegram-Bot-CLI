@@ -59,7 +59,7 @@ If you configure a self-hosted server, use `http://` only on a controlled local 
 
 ## Proxy
 
-Pass the global `--proxy <URL>` option before or after a subcommand to route the Bot API request through one proxy:
+Pass the global `--proxy <URL>` option before or after a subcommand to route the Bot API request through one proxy. Connections are handled directly by `reqwest` 0.13.5:
 
 ```bash
 tgpush --proxy 'http://127.0.0.1:8080' check
@@ -72,11 +72,10 @@ The following URL schemes are supported:
 |---|---|
 | `http://` | Supports HTTP proxy Basic authentication through URL credentials. |
 | `https://` | Uses TLS when connecting to the HTTP proxy; URL credentials use Basic authentication. |
-| `socks4://` / `socks4a://` | SOCKS4 with local / proxy-side DNS resolution respectively. The URL username is sent as the SOCKS4 user ID; SOCKS4 has no password authentication. |
+| `socks4://` / `socks4a://` | SOCKS4 with local / proxy-side DNS resolution respectively. For local resolution, an IPv4 address is preferred because SOCKS4 cannot tunnel to IPv6 destinations. |
 | `socks5://` / `socks5h://` | SOCKS5 with local / proxy-side DNS resolution respectively; supports username/password authentication. |
-| `socks://` | Alias for `socks5://`. |
 
-Put credentials in the URL, for example `https://user:password@proxy.example:8443` or `socks5://user:password@proxy.example:1080`. Percent-encode reserved characters in usernames and passwords. SOCKS4/4a accepts only a user ID such as `socks4://user@proxy.example:1080`; a password is rejected because SOCKS4 has no password authentication. Use SOCKS5 when username/password authentication is required.
+Put credentials in the URL for HTTP, HTTPS, and SOCKS5 proxies, for example `https://user:password@proxy.example:8443` or `socks5://user:password@proxy.example:1080`. Percent-encode reserved characters in usernames and passwords. Use SOCKS5 when proxy authentication is required.
 
 The proxy URL, including any credentials, is a command-line argument and can be visible in shell history and process listings. Use an account and execution environment appropriate for that exposure.
 

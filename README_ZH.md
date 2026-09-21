@@ -59,7 +59,7 @@ set "TELEGRAM_BOT_API_BASE_URL=https://api.telegram.org"
 
 ## 代理
 
-使用全局参数 `--proxy <URL>` 可在子命令前或后为当前 Bot API 请求指定一个代理：
+使用全局参数 `--proxy <URL>` 可在子命令前或后为当前 Bot API 请求指定一个代理。连接由 `reqwest` 0.13.5 直接处理：
 
 ```bash
 tgpush --proxy 'http://127.0.0.1:8080' check
@@ -72,11 +72,10 @@ tgpush check --proxy 'socks5://proxy-user:proxy-password@127.0.0.1:1080'
 |---|---|
 | `http://` | URL 中可通过用户名和密码使用 HTTP 代理 Basic 认证。 |
 | `https://` | 连接 HTTP 代理时使用 TLS；URL 中的用户名和密码使用 Basic 认证。 |
-| `socks4://` / `socks4a://` | 分别在本机 / 代理端解析 DNS 的 SOCKS4。URL 用户名会作为 SOCKS4 用户 ID 发送；SOCKS4 不支持密码认证。 |
+| `socks4://` / `socks4a://` | 分别在本机 / 代理端解析 DNS 的 SOCKS4。本机解析时会优先使用 IPv4，因为 SOCKS4 无法连接 IPv6 目标。 |
 | `socks5://` / `socks5h://` | 分别在本机 / 代理端解析 DNS 的 SOCKS5，支持用户名密码认证。 |
-| `socks://` | `socks5://` 的别名。 |
 
-认证信息写在 URL 中，例如 `https://user:password@proxy.example:8443` 或 `socks5://user:password@proxy.example:1080`。用户名或密码包含保留字符时需使用百分号编码。SOCKS4/4a 仅接受用户 ID，例如 `socks4://user@proxy.example:1080`；由于 SOCKS4 不支持密码认证，带密码的 URL 会被拒绝。需要用户名密码认证时请使用 SOCKS5。
+HTTP、HTTPS 和 SOCKS5 代理的认证信息写在 URL 中，例如 `https://user:password@proxy.example:8443` 或 `socks5://user:password@proxy.example:1080`。用户名或密码包含保留字符时需使用百分号编码。需要代理认证时请使用 SOCKS5。
 
 代理 URL（包括其中的认证信息）会作为命令行参数出现，可能进入 shell 历史记录或被进程列表看到。请根据运行环境妥善使用。
 

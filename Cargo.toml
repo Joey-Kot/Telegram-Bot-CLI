@@ -8,14 +8,13 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4.6.7", features = ["derive"] }
 mime_guess = "2.0"
-percent-encoding = "2.3"
-reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls", "socks", "stream"] }
+reqwest = { version = "=0.13.5", default-features = false, features = ["json", "multipart", "rustls", "socks", "stream"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
-tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "net", "rt-multi-thread", "time"] }
+tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "net", "rt-multi-thread"] }
 tokio-util = { version = "0.7", features = ["io"] }
 url = "2.5"
 
@@ -24,3 +23,8 @@ assert_cmd = "2"
 predicates = "3"
 tempfile = "3"
 wiremock = "0.6"
+
+[patch.crates-io]
+# Fixes the malformed empty-USERID SOCKS4/SOCKS4a handshake still present in
+# the published hyper-util 0.1.20 selected by reqwest 0.13.5.
+hyper-util = { git = "https://github.com/hyperium/hyper-util.git", rev = "b31e983c2261c27aa67d0216f97cacc01511241b" }
