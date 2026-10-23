@@ -2,7 +2,7 @@
 name = "tgpush"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.99.1"
 description = "A command-line client for selected Telegram Bot API methods"
 license = "MIT"
 readme = "README.md"
