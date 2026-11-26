@@ -1,6 +1,19 @@
 use std::path::PathBuf;
 
 use clap::{ArgAction, Args, Parser, Subcommand};
+use clap_complete::{ArgValueCompleter, PathCompleter};
+
+use crate::completion;
+
+const PARSE_MODES: [&str; 3] = ["MarkdownV2", "HTML", "Markdown"];
+
+fn file_or_stdin() -> ArgValueCompleter {
+    completion::path_values(PathCompleter::file().stdio())
+}
+
+fn file_path() -> ArgValueCompleter {
+    completion::path_values(PathCompleter::file())
+}
 
 #[derive(Debug, Parser)]
 #[command(
@@ -119,7 +132,7 @@ pub struct SendOptionsArgs {
     pub suggested_post_parameters_json: Option<String>,
 
     /// SuggestedPostParameters JSON 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub suggested_post_parameters_json_file: Option<PathBuf>,
 
     /// ReplyParameters JSON 对象
@@ -127,7 +140,7 @@ pub struct SendOptionsArgs {
     pub reply_parameters_json: Option<String>,
 
     /// ReplyParameters JSON 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub reply_parameters_json_file: Option<PathBuf>,
 
     /// ReplyMarkup JSON 对象
@@ -135,7 +148,7 @@ pub struct SendOptionsArgs {
     pub reply_markup_json: Option<String>,
 
     /// ReplyMarkup JSON 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub reply_markup_json_file: Option<PathBuf>,
 }
 
@@ -146,11 +159,11 @@ pub struct CaptionArgs {
     pub caption: Option<String>,
 
     /// 媒体标题 UTF-8 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub caption_file: Option<PathBuf>,
 
     /// 标题解析模式：MarkdownV2、HTML 或 Markdown；自动处理对应格式的转义
-    #[arg(long)]
+    #[arg(long, add = completion::values(PARSE_MODES))]
     pub parse_mode: Option<String>,
 
     /// MessageEntity JSON 数组
@@ -158,7 +171,7 @@ pub struct CaptionArgs {
     pub caption_entities_json: Option<String>,
 
     /// MessageEntity JSON 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub caption_entities_json_file: Option<PathBuf>,
 }
 
@@ -193,11 +206,11 @@ pub struct MessageArgs {
     pub text: Option<String>,
 
     /// UTF-8 文本文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub text_file: Option<PathBuf>,
 
     /// 文本解析模式：MarkdownV2、HTML 或 Markdown；自动处理对应格式的转义
-    #[arg(long)]
+    #[arg(long, add = completion::values(PARSE_MODES))]
     pub parse_mode: Option<String>,
 
     /// MessageEntity JSON 数组
@@ -205,7 +218,7 @@ pub struct MessageArgs {
     pub entities_json: Option<String>,
 
     /// MessageEntity JSON 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub entities_json_file: Option<PathBuf>,
 
     /// LinkPreviewOptions JSON 对象
@@ -213,7 +226,7 @@ pub struct MessageArgs {
     pub link_preview_options_json: Option<String>,
 
     /// LinkPreviewOptions JSON 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub link_preview_options_json_file: Option<PathBuf>,
 }
 
@@ -251,7 +264,7 @@ pub struct ForwardMessageArgs {
     pub suggested_post_parameters_json: Option<String>,
 
     /// SuggestedPostParameters JSON 文件；使用 - 从标准输入读取
-    #[arg(long)]
+    #[arg(long, add = file_or_stdin())]
     pub suggested_post_parameters_json_file: Option<PathBuf>,
 }
 
@@ -287,7 +300,7 @@ pub struct PhotoArgs {
     pub photo: Option<String>,
 
     /// 要上传的本地图片路径
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub photo_file: Option<PathBuf>,
 
     /// 将标题显示在媒体上方
@@ -309,7 +322,7 @@ pub struct AudioArgs {
     pub audio: Option<String>,
 
     /// 要上传的本地音频路径
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub audio_file: Option<PathBuf>,
 
     /// 音频时长（秒）
@@ -325,7 +338,7 @@ pub struct AudioArgs {
     pub title: Option<String>,
 
     /// 要上传的本地 JPEG 缩略图
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub thumbnail_file: Option<PathBuf>,
 }
 
@@ -339,11 +352,11 @@ pub struct DocumentArgs {
     pub document: Option<String>,
 
     /// 要上传的本地文档路径
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub document_file: Option<PathBuf>,
 
     /// 要上传的本地 JPEG 缩略图
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub thumbnail_file: Option<PathBuf>,
 
     /// 禁用 Telegram 的内容类型检测
@@ -361,7 +374,7 @@ pub struct VideoArgs {
     pub video: Option<String>,
 
     /// 要上传的本地视频路径
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub video_file: Option<PathBuf>,
 
     /// 视频时长（秒）
@@ -377,7 +390,7 @@ pub struct VideoArgs {
     pub height: Option<u32>,
 
     /// 要上传的本地 JPEG 缩略图
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub thumbnail_file: Option<PathBuf>,
 
     /// 视频封面的 HTTP URL 或 Telegram file_id
@@ -385,7 +398,7 @@ pub struct VideoArgs {
     pub cover: Option<String>,
 
     /// 要上传的本地视频封面路径
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub cover_file: Option<PathBuf>,
 
     /// 视频起始时间戳（秒）
@@ -415,7 +428,7 @@ pub struct AnimationArgs {
     pub animation: Option<String>,
 
     /// 要上传的本地动画路径
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub animation_file: Option<PathBuf>,
 
     /// 动画时长（秒）
@@ -431,7 +444,7 @@ pub struct AnimationArgs {
     pub height: Option<u32>,
 
     /// 要上传的本地 JPEG 缩略图
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub thumbnail_file: Option<PathBuf>,
 
     /// 将标题显示在媒体上方
@@ -453,7 +466,7 @@ pub struct VoiceArgs {
     pub voice: Option<String>,
 
     /// 要上传的本地语音文件路径
-    #[arg(long)]
+    #[arg(long, add = file_path())]
     pub voice_file: Option<PathBuf>,
 
     /// 语音时长（秒）

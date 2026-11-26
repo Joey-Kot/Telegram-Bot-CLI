@@ -133,6 +133,22 @@ tgpush forward-messages \
 
 All operational arguments use long options only, such as `--chat-id` and `--photo-file`. `--help` and `--version` are also available only in their long forms.
 
+## Shell completion
+
+With `tgpush` on your `PATH`, run the command for your shell to enable completion in the current session.
+
+| Shell | Command |
+| --- | --- |
+| Bash | `source <(tgpush completion bash)` |
+| Zsh | `source <(tgpush completion zsh)` |
+| Fish | `tgpush completion fish \| source` |
+| PowerShell | `tgpush completion powershell \| Out-String \| Invoke-Expression` |
+| Elvish | `eval (tgpush completion elvish \| slurp)` |
+
+If Zsh completion has yet to be initialized, run `autoload -Uz compinit && compinit` first. For future sessions, add the corresponding command to your shell startup configuration.
+
+Completion includes subcommands, their options, parse modes, and local paths. Loading and using completion works without a bot token.
+
 ## Target Chat and Sending Options
 
 `message` and all media commands share the following target options:

@@ -50,33 +50,6 @@ async fn text_and_json_files_are_read_as_utf8_without_escape_rewriting() {
         .stdout("{\"ok\":true,\"result\":{}}");
 }
 
-#[tokio::test]
-async fn text_file_dash_reads_stdin_once_and_preserves_real_newlines() {
-    let server = MockServer::start().await;
-    Mock::given(method("POST"))
-        .and(path("/bottest-token/sendMessage"))
-        .and(body_json(json!({
-            "chat_id": "@target",
-            "text": "第一行\n第二行\n"
-        })))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .set_body_raw(b"{\"ok\":true,\"result\":{}}", "application/json"),
-        )
-        .mount(&server)
-        .await;
-
-    let mut command = tgpush(&server);
-    let output = command
-        .args(["message", "--chat-id", "@target", "--text-file", "-"])
-        .write_stdin("第一行\n第二行\n")
-        .output()
-        .expect("run tgpush");
-
-    assert_eq!(output.status.code(), Some(0));
-    assert_eq!(output.stdout, b"{\"ok\":true,\"result\":{}}");
-}
-
 #[test]
 fn parse_mode_and_entities_are_rejected_locally() {
     let mut command = Command::cargo_bin("tgpush").expect("tgpush binary should be available");

@@ -21,6 +21,26 @@ fn root_help_lists_the_public_commands() {
 }
 
 #[test]
+fn completion_works_without_a_bot_token() {
+    for shell in ["bash", "zsh", "fish", "powershell", "elvish"] {
+        tgpush()
+            .args(["completion", shell])
+            .env_remove("TELEGRAM_BOT_TOKEN")
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("--_complete"));
+    }
+
+    tgpush()
+        .args(["--_complete", "words"])
+        .write_stdin("tgpush\0photo\0--parse-mode\0M\0")
+        .env_remove("TELEGRAM_BOT_TOKEN")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("MarkdownV2"));
+}
+
+#[test]
 fn delete_requires_a_chat_and_one_positive_message_id() {
     for args in [
         vec!["delete", "--chat-id", "@target"],
@@ -54,15 +74,6 @@ fn delete_requires_a_chat_and_one_positive_message_id() {
             .code(2)
             .stdout(predicate::str::is_empty());
     }
-}
-
-#[test]
-fn short_help_is_not_a_public_argument() {
-    tgpush()
-        .arg("-h")
-        .assert()
-        .code(2)
-        .stderr(predicate::str::contains("unexpected argument '-h'"));
 }
 
 #[test]

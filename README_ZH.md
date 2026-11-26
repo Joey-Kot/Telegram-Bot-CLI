@@ -133,6 +133,22 @@ tgpush forward-messages \
 
 所有业务参数都只使用长参数，例如 `--chat-id`、`--photo-file`。`--help` 和 `--version` 也只提供长形式。
 
+## Shell 补全
+
+将 `tgpush` 放入 `PATH` 后，在对应 Shell 里运行命令即可为当前会话启用补全。
+
+| Shell | 启用命令 |
+| --- | --- |
+| Bash | `source <(tgpush completion bash)` |
+| Zsh | `source <(tgpush completion zsh)` |
+| Fish | `tgpush completion fish \| source` |
+| PowerShell | `tgpush completion powershell \| Out-String \| Invoke-Expression` |
+| Elvish | `eval (tgpush completion elvish \| slurp)` |
+
+如果 Zsh 尚未初始化补全，先运行 `autoload -Uz compinit && compinit`。要在新会话中自动启用，把对应命令加到 Shell 的启动配置。
+
+补全包括子命令及其选项、解析模式和本地文件路径。加载和使用补全无需 Bot Token。
+
 ## 目标聊天和发送参数
 
 `message` 及所有媒体命令共享以下目标参数：

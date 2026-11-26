@@ -2,6 +2,7 @@
 
 mod cli;
 mod commands;
+mod completion;
 mod config;
 mod error;
 mod formatting;
@@ -11,16 +12,23 @@ mod telegram;
 use std::io::{self, Write};
 use std::process::ExitCode;
 
-use clap::Parser;
+use clap::CommandFactory;
 
 use crate::cli::Cli;
 use crate::config::Config;
 use crate::error::AppError;
 
-#[tokio::main]
-async fn main() -> ExitCode {
-    let cli = Cli::parse();
+fn main() -> ExitCode {
+    let command = Cli::command().subcommand(completion::command("生成 Shell 补全脚本"));
+    match completion::parse(command) {
+        Ok(Some(cli)) => run(cli),
+        Ok(None) => ExitCode::SUCCESS,
+        Err(_) => report_error(AppError::OutputWrite),
+    }
+}
 
+#[tokio::main]
+async fn run(cli: Cli) -> ExitCode {
     let config = match Config::from_env() {
         Ok(config) => config,
         Err(error) => return report_error(error),

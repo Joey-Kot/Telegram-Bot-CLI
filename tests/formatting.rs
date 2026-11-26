@@ -22,8 +22,8 @@ async fn message_escapes_the_selected_format_without_changing_parse_mode() {
     for (mode, input, expected) in [
         (
             "MarkdownV2",
-            "*版本 v1.2!* [说明](https://example.com/a(b)?x=1&y=2)",
-            r"*版本 v1\.2\!* [说明](https://example.com/a(b\)?x=1&y=2)",
+            r"*版本 v1.2!* [说明](https://example.com/a(b)?x=1&y=2) literal \n, emoji 😀",
+            r"*版本 v1\.2\!* [说明](https://example.com/a(b\)?x=1&y=2) literal \\n, emoji 😀",
         ),
         (
             "HTML",
@@ -152,7 +152,7 @@ async fn uploaded_media_formats_caption_files_in_multipart() {
         .args([
             "photo",
             "--chat-id",
-            "@target",
+            "-100123",
             "--photo-file",
             photo.path().to_str().expect("photo path"),
             "--caption-file",
@@ -163,10 +163,13 @@ async fn uploaded_media_formats_caption_files_in_multipart() {
         .assert()
         .success();
     let requests = server.received_requests().await.expect("requests");
+    assert_eq!(requests.len(), 1);
     let body = String::from_utf8_lossy(&requests[0].body);
+    assert!(body.contains("name=\"chat_id\"\r\n\r\n-100123\r\n"));
+    assert!(body.contains("name=\"photo\"; filename="));
     assert!(body.contains("name=\"caption\"\r\n\r\n*v1\\.2\\!* `C:\\\\tmp`\n\r\n"));
     assert!(body.contains("name=\"parse_mode\"\r\n\r\nMarkdownV2\r\n"));
-    assert!(body.contains("photo-bytes"));
+    assert!(body.contains("\r\n\r\nphoto-bytes\r\n"));
 }
 
 #[tokio::test]

@@ -1,7 +1,5 @@
 use assert_cmd::Command;
-use serde_json::json;
-use tempfile::NamedTempFile;
-use wiremock::matchers::{body_json, method, path};
+use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn tgpush(server: &MockServer) -> Command {
@@ -79,90 +77,4 @@ async fn non_json_responses_do_not_write_to_stdout_or_expose_the_token() {
     assert!(output.stdout.is_empty());
     assert!(stderr.contains("不是有效 JSON"));
     assert!(!stderr.contains("test-token"));
-}
-
-#[tokio::test]
-async fn message_uses_json_and_keeps_literal_backslash_sequences() {
-    let server = MockServer::start().await;
-    Mock::given(method("POST"))
-        .and(path("/bottest-token/sendMessage"))
-        .and(body_json(json!({
-            "chat_id": "@example_channel",
-            "text": "literal \\\\n, emoji 😀",
-            "parse_mode": "MarkdownV2"
-        })))
-        .respond_with(ResponseTemplate::new(200).set_body_raw(
-            b"{\"ok\":true,\"result\":{\"message_id\":99}}",
-            "application/json",
-        ))
-        .mount(&server)
-        .await;
-
-    let output = tgpush(&server)
-        .args([
-            "message",
-            "--chat-id",
-            "@example_channel",
-            "--text",
-            "literal \\n, emoji 😀",
-            "--parse-mode",
-            "MarkdownV2",
-        ])
-        .output()
-        .expect("run tgpush");
-
-    assert_eq!(output.status.code(), Some(0));
-    assert_eq!(
-        output.stdout,
-        b"{\"ok\":true,\"result\":{\"message_id\":99}}"
-    );
-    assert!(output.stderr.is_empty());
-}
-
-#[tokio::test]
-async fn photo_upload_uses_multipart_and_preserves_the_file() {
-    let server = MockServer::start().await;
-    Mock::given(method("POST"))
-        .and(path("/bottest-token/sendPhoto"))
-        .respond_with(ResponseTemplate::new(200).set_body_raw(
-            b"{\"ok\":true,\"result\":{\"message_id\":7}}",
-            "application/json",
-        ))
-        .mount(&server)
-        .await;
-
-    let file = NamedTempFile::new().expect("create temp image");
-    std::fs::write(file.path(), b"fake-image-bytes").expect("write temp image");
-
-    let output = tgpush(&server)
-        .args([
-            "photo",
-            "--chat-id",
-            "-100123",
-            "--photo-file",
-            file.path().to_str().expect("temp path should be utf-8"),
-            "--caption",
-            "图片",
-        ])
-        .output()
-        .expect("run tgpush");
-
-    assert_eq!(output.status.code(), Some(0));
-    assert_eq!(
-        output.stdout,
-        b"{\"ok\":true,\"result\":{\"message_id\":7}}"
-    );
-
-    let requests = server
-        .received_requests()
-        .await
-        .expect("requests are available");
-    assert_eq!(requests.len(), 1);
-    let body = String::from_utf8_lossy(&requests[0].body);
-    assert!(body.contains("name=\"chat_id\""));
-    assert!(body.contains("-100123"));
-    assert!(body.contains("name=\"caption\""));
-    assert!(body.contains("图片"));
-    assert!(body.contains("name=\"photo\""));
-    assert!(body.contains("fake-image-bytes"));
 }
